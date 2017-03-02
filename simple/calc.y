@@ -9,10 +9,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
+	"runtime"
 	"unicode"
+
+	"github.com/chzyer/readline"
 )
 
 var regs = make([]int, 26)
@@ -123,26 +125,44 @@ func (l *CalcLex) Error(s string) {
 	fmt.Printf("syntax error: %s\n", s)
 }
 
-func main() {
-	fi := bufio.NewReader(os.NewFile(0, "stdin"))
-
-	for {
-		var eqn string
-		var ok bool
-
-		fmt.Printf("equation: ")
-		if eqn, ok = readline(fi); ok {
-			CalcParse(&CalcLex{s: eqn})
-		} else {
-			break
-		}
-	}
+func getHomeDir() string {
+    if runtime.GOOS == "windows" {
+        home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+        if home == "" {
+            home = os.Getenv("USERPROFILE")
+        }
+        return home
+    }
+    return os.Getenv("HOME")
 }
 
-func readline(fi *bufio.Reader) (string, bool) {
-	s, err := fi.ReadString('\n')
-	if err != nil {
-		return "", false
+func main() {
+
+	// readline for the prompt and history, a go implementation of
+    // the gnu libreadline library.
+    rl, err := readline.NewEx(&readline.Config{
+        Prompt:      "eqn> ",
+        HistoryFile: getHomeDir() + "/.eq_history",
+    })
+
+    if err != nil {
+        panic(err)
+    }
+    defer rl.Close()
+
+	for {
+        var eqn string
+        var ok error 
+
+		eqn, ok = rl.Readline()
+        if ok != nil {
+            break
+        }
+		if eqn == "" {
+			continue
+		}
+		// Readline does not include the newline required by the parser
+		eqn = eqn + "\n"
+		CalcParse(&CalcLex{s: eqn})
 	}
-	return s, true
 }
