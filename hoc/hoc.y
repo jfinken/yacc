@@ -28,6 +28,10 @@ var regs = make([]float64, 26)
 }
 %token <val> DIGIT 
 %token <index> VAR
+%token <val> EOF
+%token <val> IDENT
+%token <val> WHITESPACE
+%token <val> ERROR
 
 // any non-terminal which returns a value needs a type, which is
 // really a field name in the above union struct
