@@ -23,29 +23,6 @@ type HocLex struct {
 	width int
 }
 
-func (lxr *HocLex) lexOrig(lval *HocSymType) int {
-	c := ' ' // rune
-	for c == ' ' {
-		if lxr.sidx == len(lxr.src) {
-			return 0
-		}
-		c = rune(lxr.src[lxr.sidx])
-		lxr.sidx++
-	}
-
-	if unicode.IsDigit(c) {
-		f, _ := strconv.ParseFloat(string(c), 64)
-		//fmt.Printf("int:   %d\n", int(c) - '0')
-		fmt.Printf("float: %f\n", f)
-		lval.val = f
-		return DIGIT
-	} else if unicode.IsLower(c) {
-		lval.index = int(c) - 'a'
-		return VAR
-	}
-	return int(c)
-}
-
 // Lex is the entry point for the lexer.  This func name signature and
 // return type is expected by goyacc: implements HocLexer interface.
 // yyparse calls Lex repeatedly for input tokens, returning a 0 signals
@@ -62,8 +39,10 @@ func (lxr *HocLex) Error(s string) {
 	fmt.Printf("syntax error: %s\n", s)
 }
 
-// Next parses each incoming src string to rune and returns
-// a corresponding Token.  This is the core lexer entry point.
+// Next is the entry point to the lexical analyzer.  The lexer reads the input
+// stream and communicates tokens (with values, if desired) to the parser.
+// Specifically, Next parses each incoming src string to rune and returns a
+// corresponding Token.
 func (lxr *HocLex) Next(lval *HocSymType) Token {
 
 	token := lxr.next()
@@ -72,15 +51,12 @@ func (lxr *HocLex) Next(lval *HocSymType) Token {
 	if token == DIGIT {
 		f, _ := strconv.ParseFloat(value, 64)
 		lval.val = f
+	} else if token == IDENT {
+		lval.index = value
+		return VAR
 	}
-	//fmt.Printf("token: %v, value: %v, lval.val: %0.2f\n", token, value, lval.val)
-	/*
-		keyword := NIL
-		if token == IDENTIFIER && lxr.peek() != ':' {
-			keyword = Keyword(value)
-		}
-		return Item{token, keyword, value}
-	*/
+	//fmt.Printf("token: %v, value: %v, lval.index: %s, lval.val: %0.2f\n",
+	//	token, value, lval.index, lval.val)
 	return token
 }
 
@@ -136,6 +112,7 @@ func (lxr *HocLex) whitespace(c rune) {
 	lxr.backup()
 }
 func (lxr *HocLex) identifier() Token {
+	// consume all identifier chars
 	lxr.matchWhile(isIdentChar)
 	/*
 		if !lxr.match('?') {

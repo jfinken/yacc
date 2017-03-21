@@ -16,7 +16,7 @@ import (
 	"github.com/chzyer/readline"
 )
 
-var regs = make([]float64, 26)
+var regs = make(map[string]float64)
 
 %}
 
@@ -24,14 +24,11 @@ var regs = make([]float64, 26)
 // as ${PREFIX}SymType, of which a reference is passed to the lexer.
 %union{
 	val float64 
-	index int
+	index string
 }
 %token <val> DIGIT 
 %token <index> VAR
-%token <val> EOF
 %token <val> IDENT
-%token <val> WHITESPACE
-%token <val> NEWLINE 
 %token <val> ERROR
 
 // any non-terminal which returns a value needs a type, which is
@@ -49,7 +46,7 @@ list	: 	/* empty */
 		| 	list stat 		'\n'	
 		;
 
-stat	:    expr 			{ fmt.Printf( "%0.2f\n", $1 ) }
+stat	:    expr 			{ fmt.Printf( "%0.4f\n", $1 ) }
 		|    VAR  '='  expr { regs[$1]  =  $3 }
 		;
 
@@ -62,23 +59,6 @@ expr	:    DIGIT 			{ $$ = $1 }
 		|    '-'  expr     	%prec  UMINUS  { $$  = -$2  }
 		|   VAR  			{ $$  = regs[$1] }
 		;
-
-/*
-list: 	// empty 
-		| list '\n'
-		| list expr '\n' 	{ fmt.Printf( "%0.2f\n", $2 );}
-		;
-
-expr:    DIGIT 				{ $$  = $1 }
-		|   VAR 			{ $$  = regs[$1] }
-		|    expr '+' expr 	{ $$  =  $1 + $3 }
-		|    expr '-' expr 	{ $$  =  $1 - $3 }
-		|    expr '*' expr	{ $$  =  $1 * $3 }
-		|    expr '/' expr	{ $$  =  $1 / $3 }
-		|    '-'  expr    	%prec  UMINUS	{ $$  = -$2  }
-		|   '(' expr ')'	{ $$  =  $2 }
-		;
-*/
 %%      
 
 /*  start  of  programs  */
