@@ -50,6 +50,7 @@ list	: 	/* empty */
 		;
 
 stat	:    expr 			{ fmt.Printf( "%0.2f\n", $1 ) }
+		|    VAR  '='  expr { regs[$1]  =  $3 }
 		;
 
 expr	:    DIGIT 			{ $$ = $1 }
@@ -98,7 +99,7 @@ func main() {
 	// readline for the prompt and history, a go implementation of
     // the gnu libreadline library.
     rl, err := readline.NewEx(&readline.Config{
-        Prompt:      "eqn> ",
+        Prompt:      "hoc> ",
         HistoryFile: getHomeDir() + "/.eq_history",
     })
 
