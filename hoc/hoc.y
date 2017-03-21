@@ -31,11 +31,12 @@ var regs = make([]float64, 26)
 %token <val> EOF
 %token <val> IDENT
 %token <val> WHITESPACE
+%token <val> NEWLINE 
 %token <val> ERROR
 
 // any non-terminal which returns a value needs a type, which is
 // really a field name in the above union struct
-%type <val> expr number
+%type <val> stat expr
 %right '='
 %left '|'
 %left '&'
@@ -44,42 +45,39 @@ var regs = make([]float64, 26)
 %left UMINUS      /*  supplies  precedence  for  unary  minus  */
 
 %%
+list	: 	/* empty */
+		| 	list stat 		'\n'	
+		;
 
-list	: /* empty */
-	| list stat '\n'
-	;
+stat	:    expr 			{ fmt.Printf( "%0.2f\n", $1 ) }
+		;
 
-stat	:    expr
-		{ fmt.Printf( "%0.2f\n", $1 );}
-	|    VAR '=' expr
-		{ regs[$1]  =  $3 }
-	;
+expr	:    DIGIT 			{ $$ = $1 }
+		| 	'(' expr ')'	{ $$  =  $2 }
+		|    expr '+' expr	{ $$  =  $1 + $3 }
+		|    expr '-' expr	{ $$  =  $1 - $3 }
+		|    expr '*' expr	{ $$  =  $1 * $3 }
+		|    expr '/' expr 	{ $$  =  $1 / $3 }
+		|    '-'  expr     	%prec  UMINUS  { $$  = -$2  }
+		|   VAR  			{ $$  = regs[$1] }
+		;
 
+/*
+list: 	// empty 
+		| list '\n'
+		| list expr '\n' 	{ fmt.Printf( "%0.2f\n", $2 );}
+		;
 
-expr	:    DIGIT
-	|   '(' expr ')'
-		{ $$  =  $2 }
-	|    expr '+' expr
-		{ $$  =  $1 + $3 }
-	|    expr '-' expr
-		{ $$  =  $1 - $3 }
-	|    expr '*' expr
-		{ $$  =  $1 * $3 }
-	|    expr '/' expr
-		{ $$  =  $1 / $3 }
-	|    '-'  expr        %prec  UMINUS
-		{ $$  = -$2  }
-	|   VAR 
-		{ $$  = regs[$1] }
-	|    number
-	;
-
-number	:  DIGIT
-		{ $$ = $1; }
-	|    number DIGIT
-		{ $$ = 10 * $1 + $2 } /* multi-rune numbers, base-10 */
-	;
-
+expr:    DIGIT 				{ $$  = $1 }
+		|   VAR 			{ $$  = regs[$1] }
+		|    expr '+' expr 	{ $$  =  $1 + $3 }
+		|    expr '-' expr 	{ $$  =  $1 - $3 }
+		|    expr '*' expr	{ $$  =  $1 * $3 }
+		|    expr '/' expr	{ $$  =  $1 / $3 }
+		|    '-'  expr    	%prec  UMINUS	{ $$  = -$2  }
+		|   '(' expr ')'	{ $$  =  $2 }
+		;
+*/
 %%      
 
 /*  start  of  programs  */
@@ -108,6 +106,9 @@ func main() {
         panic(err)
     }
     defer rl.Close()
+
+	HocDebug = 1
+	HocErrorVerbose = true
 
 	for {
         var eqn string

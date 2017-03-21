@@ -73,7 +73,7 @@ func (lxr *HocLex) Next(lval *HocSymType) Token {
 		f, _ := strconv.ParseFloat(value, 64)
 		lval.val = f
 	}
-	fmt.Printf("token: %v, value: %s\n", token, value)
+	//fmt.Printf("token: %v, lval.val: %0.2f\n", token, lval.val)
 	/*
 		keyword := NIL
 		if token == IDENTIFIER && lxr.peek() != ':' {
@@ -88,10 +88,14 @@ func (lxr *HocLex) next() Token {
 	lxr.start = lxr.sidx
 	c := lxr.read()
 	switch c {
-	case eof:
-		return EOF
+	//case eof:
+	//	return Token(c)
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		return lxr.number()
+	case '.':
+		if unicode.IsDigit(lxr.peek()) {
+			return lxr.number()
+		}
 	default:
 		if isSpace(c) {
 			return lxr.whitespace(c)
@@ -99,7 +103,7 @@ func (lxr *HocLex) next() Token {
 			return lxr.identifier()
 		}
 	}
-	return ERROR
+	return Token(c)
 }
 
 func (lxr *HocLex) read() rune {
@@ -112,13 +116,17 @@ func (lxr *HocLex) read() rune {
 	lxr.width = w
 	return c
 }
+func (lxr *HocLex) peek() rune {
+	c := lxr.read()
+	lxr.backup()
+	return c
+}
 func (lxr *HocLex) whitespace(c rune) Token {
 	for ; isSpace(c); c = lxr.read() {
-		/* handled by the grammar
+		// handled by the grammar?
 		if c == '\n' || c == '\r' {
-			result = NEWLINE
+			return NEWLINE
 		}
-		*/
 	}
 	lxr.backup()
 	return WHITESPACE
@@ -162,7 +170,8 @@ func (lxr *HocLex) backup() {
 	lxr.sidx -= lxr.width
 }
 func isSpace(c rune) bool {
-	// return c == ' ' || c == '\t' || c == '\r' || c == '\n'
+	//return c == ' ' || c == '\t' || c == '\r' || c == '\n'
+	// newline handled by grammar
 	return c == ' ' || c == '\t' || c == '\r'
 }
 func isIdentChar(r rune) bool {
