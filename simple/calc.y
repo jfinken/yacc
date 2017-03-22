@@ -113,6 +113,7 @@ func (l *CalcLex) Lex(lval *CalcSymType) int {
 
 	if unicode.IsDigit(c) {
 		lval.val = int(c) - '0'
+        fmt.Printf("int: %d\n", lval.val)
 		return DIGIT
 	} else if unicode.IsLower(c) {
 		lval.val = int(c) - 'a'

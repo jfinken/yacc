@@ -1,5 +1,5 @@
-hoc - high order calculator
-===========================
+hoc - higher order calculator
+=============================
 
 ## Overview
 
@@ -31,7 +31,6 @@ reader who forks the project.
     $ ./hoc
     hoc> 2.35 * 4.5
     10.5750
-    hoc>
     hoc> a = 2*1024*1024
     hoc> a
     2097152.0000
